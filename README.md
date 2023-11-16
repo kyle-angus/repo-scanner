@@ -1,4 +1,4 @@
-# Local Repo Scanner
+# Repo Scanner
 
 A tool to recurse through directories and output the status of any git repos.
 
