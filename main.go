@@ -38,13 +38,13 @@ func parsePathArg() string {
 }
 
 func main() {
-	var path string
+	var startPath string
 	showHelp := flag.Bool("help", false, "Show help information")
 	showHelpShort := flag.Bool("h", false, "Show help information")
-	path = parsePathArg()
+	startPath = parsePathArg()
 	flag.Parse()
 
-	if *showHelp || *showHelpShort || path == "" {
+	if *showHelp || *showHelpShort || startPath == "" {
 		fmt.Println("\nUsage: repo-scanner PATH")
 		fmt.Println("\n  A tool to recurse through directories and output the status of any git repos.")
 		fmt.Println("\nFlags:")
@@ -52,7 +52,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	absPath, err := filepath.Abs(path)
+	absPath, err := filepath.Abs(startPath)
 	if err != nil {
 		fmt.Println("Error:", err)
 		os.Exit(1)
@@ -63,12 +63,16 @@ func main() {
 			return err
 		}
 
-		if info.IsDir() && info.Name() == "node_modules" {
-			return filepath.SkipDir
-		}
-
 		if info.IsDir() {
-			if _, err := os.Stat(filepath.Join(path, ".git")); err == nil {
+			if filepath.Dir(path) == absPath && !hasGitRepo(path) && !childContainsGitRepos(path) {
+				storeResult(path, "No Repo", color.New(color.FgYellow).SprintFunc())
+			}
+
+			if info.IsDir() && info.Name() == "node_modules" {
+				return filepath.SkipDir
+			}
+
+			if hasGitRepo(path) {
 				repo, err := git.PlainOpen(path)
 				if err != nil {
 					storeResult(path, "Error", color.New(color.FgRed).SprintFunc())
@@ -133,4 +137,31 @@ func main() {
 	for _, result := range storedResults {
 		fmt.Printf("%s: %s\n", color.New(color.FgBlue).SprintFunc()(result.path), result.colorFunc(result.status))
 	}
+}
+
+func hasGitRepo(path string) bool {
+	_, err := os.Stat(filepath.Join(path, ".git"))
+	return err == nil
+}
+
+func childContainsGitRepos(path string) bool {
+	found := false
+	filepath.Walk(path, func(subpath string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if found {
+			return filepath.SkipAll
+		}
+
+		if info.IsDir() && hasGitRepo(subpath) {
+			found = true
+			return filepath.SkipDir
+		}
+
+		return nil
+	})
+
+	return found
 }
