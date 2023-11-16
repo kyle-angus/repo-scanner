@@ -28,18 +28,31 @@ func storeResult(path, status string, colorFunc func(a ...interface{}) string) {
 	storedResults = append(storedResults, result)
 }
 
+func parsePathArg() string {
+	args := os.Args
+	if len(args) <= 1 {
+		return ""
+	} else {
+		return args[1]
+	}
+}
+
 func main() {
-	var inputPath string
-	flag.StringVar(&inputPath, "path", ".", "Specify the path to start the search")
+	var path string
 	showHelp := flag.Bool("help", false, "Show help information")
+	showHelpShort := flag.Bool("h", false, "Show help information")
+	path = parsePathArg()
 	flag.Parse()
 
-	if *showHelp {
-		flag.PrintDefaults()
+	if *showHelp || *showHelpShort || path == "" {
+		fmt.Println("\nUsage: repo-scanner PATH")
+		fmt.Println("\n  A tool to recurse through directories and output the status of any git repos.")
+		fmt.Println("\nFlags:")
+		fmt.Println("  -h, --h, -help, --help\t Show help information")
 		os.Exit(0)
 	}
 
-	absPath, err := filepath.Abs(inputPath)
+	absPath, err := filepath.Abs(path)
 	if err != nil {
 		fmt.Println("Error:", err)
 		os.Exit(1)
