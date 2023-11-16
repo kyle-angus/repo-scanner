@@ -5,7 +5,9 @@ A tool to recurse through directories and output the status of any git repos.
 ## Install
 
 `$ git clone git@github.com:kyle-angus/repo-scanner.git`
+
 `$ cd repo-scanner`
+
 `$ go install`
 
 ## Build
