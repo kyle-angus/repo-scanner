@@ -81,7 +81,13 @@ func main() {
 
 				ref, err := repo.Head()
 				if err != nil {
-					storeResult(path, "Error", color.New(color.FgRed).SprintFunc())
+					storeResult(path, "No Commits", color.New(color.FgYellow).SprintFunc())
+					return filepath.SkipDir
+				}
+
+				remotes, err := repo.Remotes()
+				if err != nil || len(remotes) == 0 {
+					storeResult(path, "No Remote", color.New(color.FgYellow).SprintFunc())
 					return filepath.SkipDir
 				}
 
